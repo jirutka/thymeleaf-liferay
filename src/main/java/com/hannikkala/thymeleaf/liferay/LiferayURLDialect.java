@@ -34,7 +34,10 @@ public class LiferayURLDialect extends AbstractDialect {
 	@Override
 	public Set<IProcessor> getProcessors() {
 		Set<IProcessor> processors = new HashSet<IProcessor>();
-		processors.add(new LiferayURLAttributeProcessor());
+		processors.add(new LiferayURLWithProcessor());
+        processors.add(new LiferayAttributeModifierProcessor("src"));
+        processors.add(new LiferayAttributeModifierProcessor("href"));
+        processors.add(new LiferayAttributeModifierProcessor("value"));
 		return processors;
 	}
 }

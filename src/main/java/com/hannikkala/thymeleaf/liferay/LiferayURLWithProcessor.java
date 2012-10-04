@@ -26,11 +26,11 @@ import com.liferay.portal.kernel.portlet.LiferayPortletURL;
  * @author Tommi Hannikkala <tommi@hannikkala.com>
  *
  */
-public class LiferayURLAttributeProcessor extends
+public class LiferayURLWithProcessor extends
 		AbstractLocalVariableDefinitionAttrProcessor {
 
-	public LiferayURLAttributeProcessor() {
-		super("url");
+	public LiferayURLWithProcessor() {
+		super("with");
 	}
 	
 	/* (non-Javadoc)
@@ -76,7 +76,7 @@ public class LiferayURLAttributeProcessor extends
 		if(varName != null) {
 			newVariables.put(varName, portletURL.toString());
 		} else {
-			element.setAttribute("href", portletURL.toString());
+			throw new TemplateProcessingException("liferay:with must contain 'var' variable for new variable definition.");
 		}
 		
 		return newVariables;
