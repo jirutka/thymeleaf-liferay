@@ -29,17 +29,24 @@ Tag Reference
 Following names are reserved for internal use:
 
 plid - Portlet Layout ID
+
 portletname - Name of the portlet where request will be sent. For example portlet_WAR_package
+
 lifecycle - Defines portlet lifecycle to be used. Allowed values are javax.portlet.PortletRequest constants:
+
     - ACTION_PHASE
     - EVENT_PHASE
     - RENDER_PHASE
     - RESOURCE_PHASE
+
 windowState - Which window state will the URL point to: normal, exclusive, maximized
+
 portletMode - Mode of the portlet from javax.portlet.PortletMode constants:
+
     - EDIT
     - HELP
     - VIEW
+
 and also com.liferay.portal.kernel.portlet.LiferayPortletMode constants.
 
 var - Used only with liferay:with -attribute. Defines local variable where generated URL is stored.
