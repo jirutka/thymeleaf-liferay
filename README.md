@@ -58,14 +58,18 @@ Usage
 
 Example 1. link
 
+```html
 <a href="#" liferay:href="var1='value', var2=${definedVariable}, lifecycle=${T(javax.portlet.PortletRequest).ACTION_PHASE}">
     Link
 </a>
+```
 
 var1 and var2 are parameters to be sent to action phase of current portlet. Lifecycle defines that the request will be action request.
 
 Example 2. with
 
+```html
 <p liferay:with="var='myurl', windowState='maximized', portletMode='EDIT'">
     <a href="${myurl}">Open edit in maximized window</a>
 </p>
+```
