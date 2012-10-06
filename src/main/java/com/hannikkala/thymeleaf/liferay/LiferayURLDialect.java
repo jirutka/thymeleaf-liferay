@@ -38,6 +38,7 @@ public class LiferayURLDialect extends AbstractDialect {
         processors.add(new LiferayAttributeModifierProcessor("src"));
         processors.add(new LiferayAttributeModifierProcessor("href"));
         processors.add(new LiferayAttributeModifierProcessor("value"));
+        processors.add(new LiferayAttributeModifierProcessor("action"));
 		return processors;
 	}
 }
