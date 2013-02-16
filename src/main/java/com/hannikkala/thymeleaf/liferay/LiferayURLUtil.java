@@ -31,6 +31,8 @@ import com.liferay.portal.model.Layout;
 import com.liferay.portal.theme.ThemeDisplay;
 import com.liferay.portlet.PortletURLFactoryUtil;
 
+import static com.liferay.portal.kernel.portlet.LiferayPortletMode.*;
+
 /**
  * Util class to create Liferay portlet URLs.
  * 
@@ -39,6 +41,10 @@ import com.liferay.portlet.PortletURLFactoryUtil;
 public class LiferayURLUtil {
 
 	protected final Logger log = LoggerFactory.getLogger(getClass());
+
+    protected static final PortletMode[] PORTLET_MODES = {
+        VIEW, EDIT, HELP, ABOUT, CONFIG, EDIT_DEFAULTS, EDIT_GUEST, PREVIEW, PRINT
+    };
 	
 	private String prefix;
 	
@@ -99,16 +105,15 @@ public class LiferayURLUtil {
 	}
 
 	protected PortletMode getPortletMode(String portletMode) {
-		if(portletMode == null) {
-			return PortletMode.VIEW;
-		}
-		
-		if(portletMode.equalsIgnoreCase(PortletMode.EDIT.toString())) {
-			return PortletMode.EDIT;
-		} else if(portletMode.equalsIgnoreCase(PortletMode.HELP.toString())) {
-			return PortletMode.HELP;
-		}
-		
+        if (portletMode != null) {
+            portletMode = portletMode.toLowerCase();
+
+            for (PortletMode mode : PORTLET_MODES) {
+                if (portletMode.equals(mode.toString())) {
+                    return mode;
+                }
+            }
+        }
 		return PortletMode.VIEW;
 	}
 	

@@ -69,7 +69,7 @@ var1 and var2 are parameters to be sent to action phase of current portlet. Life
 Example 2. with
 
 ```html
-<p liferay:with="var='myurl', windowState='maximized', portletMode='EDIT'">
+<p liferay:with="var='myurl', windowState='maximized', portletMode='edit'">
     <a href="${myurl}">Open edit in maximized window</a>
 </p>
 ```
