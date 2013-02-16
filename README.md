@@ -59,7 +59,7 @@ Usage
 Example 1. link
 
 ```html
-<a href="#" liferay:href="var1='value', var2=${definedVariable}, lifecycle=${T(javax.portlet.PortletRequest).ACTION_PHASE}">
+<a href="#" liferay:href="var1='value', var2=${definedVariable}, lifecycle='ACTION_PHASE'">
     Link
 </a>
 ```
@@ -72,4 +72,16 @@ Example 2. with
 <p liferay:with="var='myurl', windowState='maximized', portletMode='EDIT'">
     <a href="${myurl}">Open edit in maximized window</a>
 </p>
+```
+
+Example 3. action in Portlet 2.0
+
+```html
+<a href="#" liferay:href="action='find', var1=${definedVariable}">Link</a>
+```
+
+Above is only simplified form of:
+
+```html
+<a href="#" liferay:href="javax.portlet.action='find', var1=${definedVariable}, lifecycle='ACTION_PHASE'">Link</a>
 ```

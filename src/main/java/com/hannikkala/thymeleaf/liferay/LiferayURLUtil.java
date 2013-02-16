@@ -67,12 +67,19 @@ public class LiferayURLUtil {
 			portletURL.setPortletMode(getPortletMode((String) params.get("portletMode")));
 		} catch (PortletModeException e) {
 		}
+
+        if (params.containsKey("action")) {
+            String value = params.get("action") != null ? params.get("action").toString() : "";
+            portletURL.setParameter("javax.portlet.action", value, false);
+            portletURL.setLifecycle(PortletRequest.ACTION_PHASE);
+        }
 		
 		params.remove("plid");
 		params.remove("portletname");
 		params.remove("lifecycle");
 		params.remove("windowState");
 		params.remove("portletMode");
+		params.remove("action");
 		
 		addParameters(params, portletURL);
 		
