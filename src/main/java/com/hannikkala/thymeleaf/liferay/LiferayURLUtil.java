@@ -32,6 +32,7 @@ import com.liferay.portal.theme.ThemeDisplay;
 import com.liferay.portlet.PortletURLFactoryUtil;
 
 import static com.liferay.portal.kernel.portlet.LiferayPortletMode.*;
+import static com.liferay.portal.kernel.portlet.LiferayWindowState.*;
 
 /**
  * Util class to create Liferay portlet URLs.
@@ -44,6 +45,9 @@ public class LiferayURLUtil {
 
     protected static final PortletMode[] PORTLET_MODES = {
         VIEW, EDIT, HELP, ABOUT, CONFIG, EDIT_DEFAULTS, EDIT_GUEST, PREVIEW, PRINT
+    };
+    protected static final WindowState[] WINDOW_STATES = {
+        NORMAL, MAXIMIZED, MINIMIZED, EXCLUSIVE, POP_UP
     };
 	
 	private String prefix;
@@ -93,14 +97,15 @@ public class LiferayURLUtil {
 	}
 	
 	protected WindowState getWindowState(String windowState) {
-		if(windowState == null) {
-			return WindowState.NORMAL;
-		}
-		if(windowState.equalsIgnoreCase(WindowState.MAXIMIZED.toString())) {
-			return WindowState.MAXIMIZED;
-		} else if(windowState.equalsIgnoreCase(WindowState.MINIMIZED.toString())) {
-			return WindowState.MAXIMIZED;
-		}
+        if (windowState != null) {
+            windowState = windowState.toLowerCase();
+
+            for (WindowState state : WINDOW_STATES) {
+                if (windowState.equals(state.toString())) {
+                    return state;
+                }
+            }
+        }
 		return WindowState.NORMAL;
 	}
 
