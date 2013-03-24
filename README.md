@@ -85,3 +85,27 @@ Above is only simplified form of:
 ```html
 <a href="#" liferay:href="javax.portlet.action='find', var1=${definedVariable}, lifecycle='ACTION_PHASE'">Link</a>
 ```
+
+
+Maven
+-----
+
+```xml
+<dependency>
+    <groupId>cz.jirutka.thymeleaf</groupId>
+    <artifactId>liferay-url-addon</artifactId>
+    <version>1.0-SNAPSHOT</version>
+</dependency>
+
+<repository>
+    <id>cvut-local-repos</id>
+    <name>CVUT Repository Local</name>
+    <url>http://repository.fit.cvut.cz/maven/local-repos/</url>
+</repository>
+```
+
+
+License
+-------
+
+This project is licensed under [MIT license](http://opensource.org/licenses/MIT).
