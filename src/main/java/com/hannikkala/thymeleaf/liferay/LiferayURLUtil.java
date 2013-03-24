@@ -3,191 +3,163 @@
  */
 package com.hannikkala.thymeleaf.liferay;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
-
-import javax.portlet.PortletMode;
-import javax.portlet.PortletModeException;
-import javax.portlet.PortletRequest;
-import javax.portlet.WindowState;
-import javax.portlet.WindowStateException;
-import javax.servlet.http.HttpServletRequest;
-
+import com.liferay.portal.kernel.portlet.LiferayPortletURL;
+import com.liferay.portal.kernel.util.WebKeys;
+import com.liferay.portal.model.Layout;
+import com.liferay.portal.theme.ThemeDisplay;
+import com.liferay.portlet.PortletURLFactoryUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.thymeleaf.Arguments;
-import org.thymeleaf.dom.Attribute;
-import org.thymeleaf.dom.Element;
 import org.thymeleaf.exceptions.TemplateProcessingException;
 import org.thymeleaf.standard.expression.Assignation;
 import org.thymeleaf.standard.expression.AssignationSequence;
 import org.thymeleaf.standard.expression.Expression;
 import org.thymeleaf.standard.expression.StandardExpressionProcessor;
 
-import com.liferay.portal.kernel.portlet.LiferayPortletURL;
-import com.liferay.portal.kernel.util.WebKeys;
-import com.liferay.portal.model.Layout;
-import com.liferay.portal.theme.ThemeDisplay;
-import com.liferay.portlet.PortletURLFactoryUtil;
+import javax.portlet.*;
+import javax.servlet.http.HttpServletRequest;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import static com.liferay.portal.kernel.portlet.LiferayPortletMode.*;
 import static com.liferay.portal.kernel.portlet.LiferayWindowState.*;
+import static javax.portlet.PortletRequest.*;
 
 /**
  * Util class to create Liferay portlet URLs.
  * 
  * @author Tommi Hannikkala <tommi@hannikkala.com>
+ * @author Jakub Jirutka <jakub@jirutka.cz>
  */
 public class LiferayURLUtil {
 
-	protected final Logger log = LoggerFactory.getLogger(getClass());
+    private static final Logger LOG = LoggerFactory.getLogger(LiferayURLUtil.class);
 
-    protected static final PortletMode[] PORTLET_MODES = {
-        VIEW, EDIT, HELP, ABOUT, CONFIG, EDIT_DEFAULTS, EDIT_GUEST, PREVIEW, PRINT
-    };
-    protected static final WindowState[] WINDOW_STATES = {
-        NORMAL, MAXIMIZED, MINIMIZED, EXCLUSIVE, POP_UP
-    };
-	
-	private String prefix;
-	
-	/**
-	 * Default constructor
-	 * @param prefix Attribute prefix in Thymeleafed HTML.
-	 */
-	public LiferayURLUtil(String prefix) {
-		this.prefix = prefix != null ? prefix + ":" : "";
-	}
-	
-	public LiferayPortletURL createUrl(Map<String, Object> params, HttpServletRequest request) {
-		long plid = getPlid(params.get("plid"), request);
-		String portletName = getPortletName((String) params.get("portletname"), request);
-		String lifecycle = getLifecycle((String) params.get("lifecycle"));
-		
-		LiferayPortletURL portletURL = PortletURLFactoryUtil.create(request,
-				portletName, plid, lifecycle);
-		
-		try {
-			portletURL.setWindowState(getWindowState((String) params.get("windowState")));
-		} catch (WindowStateException e) {
-		}
-		
-		try {
-			portletURL.setPortletMode(getPortletMode((String) params.get("portletMode")));
-		} catch (PortletModeException e) {
-		}
+    private static final Map<String, PortletMode> PORTLET_MODES = toHashMap(
+            VIEW, EDIT, HELP, ABOUT, CONFIG, EDIT_DEFAULTS, EDIT_GUEST, PREVIEW, PRINT);
+
+    private static final Map<String, WindowState> WINDOW_STATES = toHashMap(
+            NORMAL, MAXIMIZED, MINIMIZED, EXCLUSIVE, POP_UP);
+
+    private static final Map<String, String> LIFECYCLE_PHASES = toHashMap(
+            ACTION_PHASE, EVENT_PHASE, RENDER_PHASE, RESOURCE_PHASE);
+
+    
+    public static LiferayPortletURL createUrl(Map<String, Object> params, HttpServletRequest request) {
+
+        long plid = parsePlid(params.remove("plid"), request);
+        String portletName = getPortletName((String) params.remove("portletname"), request);
+        String lifecycle = parseLifecycle((String) params.remove("lifecycle"));
+        
+        LiferayPortletURL portletURL = PortletURLFactoryUtil.create(request, portletName, plid, lifecycle);
+
+        try {
+            portletURL.setWindowState(parseWindowState((String) params.remove("windowState")));
+        } catch (WindowStateException ex) {}
+
+        try {
+            portletURL.setPortletMode(parsePortletMode((String) params.remove("portletMode")));
+        } catch (PortletModeException ex) {}
 
         if (params.containsKey("action")) {
-            String value = params.get("action") != null ? params.get("action").toString() : "";
+            String value = params.get("action") != null ? params.remove("action").toString() : "";
             portletURL.setParameter("javax.portlet.action", value, false);
-            portletURL.setLifecycle(PortletRequest.ACTION_PHASE);
+            portletURL.setLifecycle(ACTION_PHASE);
         }
-		
-		params.remove("plid");
-		params.remove("portletname");
-		params.remove("lifecycle");
-		params.remove("windowState");
-		params.remove("portletMode");
-		params.remove("action");
-		
-		addParameters(params, portletURL);
-		
-		return portletURL;
-	}
-	
-	protected WindowState getWindowState(String windowState) {
+
+        for(Entry<String, Object> entry : params.entrySet()) {
+            String value = entry.getValue() != null ? entry.getValue().toString() : "";
+            portletURL.setParameter(entry.getKey(), value, true);
+        }
+        return portletURL;
+    }
+
+    public static Map<String, Object> parseParams(Arguments arguments, String attributeValue) {
+
+        AssignationSequence assignations = StandardExpressionProcessor.parseAssignationSequence(
+                arguments, attributeValue, false /* no parameters without value */);
+        if (assignations == null) {
+            throw new TemplateProcessingException(String.format(
+                    "Could not parse value as attribute assignations: '%s'", attributeValue));
+        }
+        Map<String, Object> newLocalVariables = new HashMap<String, Object>(assignations.size() + 1, 1.0f);
+
+        for (Assignation assignation : assignations) {
+            String varName = assignation.getLeft().getValue();
+            Expression expression = assignation.getRight();
+            Object varValue = StandardExpressionProcessor.executeExpression(arguments, expression);
+
+            newLocalVariables.put(varName, varValue);
+        }
+        return newLocalVariables;
+    }
+
+    
+    private static WindowState parseWindowState(String windowState) {
         if (windowState != null) {
             windowState = windowState.toLowerCase();
 
-            for (WindowState state : WINDOW_STATES) {
-                if (windowState.equals(state.toString())) {
-                    return state;
-                }
+            if (WINDOW_STATES.containsKey(windowState)) {
+                return WINDOW_STATES.get(windowState);
             }
+            LOG.warn("No such Window State '{}', returning default one", windowState);
         }
-		return WindowState.NORMAL;
-	}
+        return WindowState.NORMAL;
+    }
 
-	protected PortletMode getPortletMode(String portletMode) {
+    private static PortletMode parsePortletMode(String portletMode) {
         if (portletMode != null) {
             portletMode = portletMode.toLowerCase();
 
-            for (PortletMode mode : PORTLET_MODES) {
-                if (portletMode.equals(mode.toString())) {
-                    return mode;
-                }
+            if (PORTLET_MODES.containsKey(portletMode)) {
+                return PORTLET_MODES.get(portletMode);
+            }
+            LOG.warn("No such Portlet Mode '{}', returning default one", portletMode);
+        }
+        return PortletMode.VIEW;
+    }
+
+    private static String parseLifecycle(String lifecycle) {
+        if (lifecycle != null) {
+            lifecycle = lifecycle.toUpperCase();
+
+            if (LIFECYCLE_PHASES.containsKey(lifecycle)) {
+                return LIFECYCLE_PHASES.get(lifecycle);
+            }
+            LOG.warn("No such Lifecycle Phase '{}', returning default one", lifecycle);
+        }
+        return PortletRequest.RENDER_PHASE;
+    }
+
+    private static String getPortletName(String portletName, HttpServletRequest request) {
+        if (portletName != null) {
+            return portletName;
+        }
+        return (String) request.getAttribute(WebKeys.PORTLET_ID);
+    }
+
+    private static long parsePlid(Object plid, HttpServletRequest request) {
+        if (plid != null) {
+            try {
+                return Long.parseLong(plid.toString());
+            } catch (NumberFormatException ex) {
+                LOG.warn("Couldn't parse plid value '{}' to long, returning default", plid);
             }
         }
-		return PortletMode.VIEW;
-	}
-	
-	protected String getAttributeValue(Element element, String attributeName) {
-		Attribute attribute = element.getAttributeFromNormalizedName(this.prefix + attributeName);
-		if(attribute == null) {
-			return null;
-		}
-		return attribute.getValue();
-	}
+        ThemeDisplay themeDisplay = (ThemeDisplay) request.getAttribute(WebKeys.THEME_DISPLAY);
+        Layout layout = themeDisplay.getLayout();
 
-	protected String getLifecycle(String lifecycle) {
-		if (lifecycle != null) {
-			return lifecycle;
-		}
-		return PortletRequest.RENDER_PHASE;
-	}
+        return layout.getPlid();
+    }
 
-	protected String getPortletName(String portletName, HttpServletRequest request) {
-		if (portletName != null) {
-			return portletName;
-		}
-		return (String) request.getAttribute(WebKeys.PORTLET_ID);
-	}
+    private static <T> Map<String, T> toHashMap(T... values) {
+        Map<String, T> map = new HashMap<String, T>(values.length +1, 1.0f);
 
-	protected long getPlid(Object plid, HttpServletRequest request) {
-		if (plid != null) {
-			try {
-				return Long.parseLong(plid.toString());
-			} catch (NumberFormatException e) {
-				log.error("Couldn't parse plid value '"
-						+ plid
-						+ "' to long. Returning default.");
-			}
-		}
-		ThemeDisplay themeDisplay = (ThemeDisplay) request
-				.getAttribute(com.liferay.portal.kernel.util.WebKeys.THEME_DISPLAY);
-		Layout layout = themeDisplay.getLayout();
-		return layout.getPlid();
-	}
-	
-	protected void addParameters(Map<String, Object> params, LiferayPortletURL portletURL) {
-		for(Entry<String, Object> entry : params.entrySet()) {
-			String name = entry.getKey();
-			String value = entry.getValue() != null ? entry.getValue().toString() : "";
-			portletURL.setParameter(name, value, true);
-		}
-	}
-
-	protected Map<String, Object> parseParams(Arguments arguments, String attributeValue) {
-		final AssignationSequence assignations = 
-			    StandardExpressionProcessor.parseAssignationSequence(
-			            arguments, attributeValue, false /* no parameters without value */);
-			if (assignations == null) {
-			    throw new TemplateProcessingException(
-			            "Could not parse value as attribute assignations: \"" + attributeValue + "\"");
-			}
-
-			final Map<String,Object> newLocalVariables = new HashMap<String,Object>(assignations.size() + 1, 1.0f);
-			for (final Assignation assignation : assignations) {
-			    
-			    final String varName = assignation.getLeft().getValue();
-			    final Expression expression = assignation.getRight();
-			    final Object varValue = StandardExpressionProcessor.executeExpression(arguments, expression);
-			    
-			    newLocalVariables.put(varName, varValue);
-			    
-			}
-	    return newLocalVariables;  
-	}
-
+        for (T value : values) {
+            map.put(value.toString(), value);
+        }
+        return map;
+    }
 }

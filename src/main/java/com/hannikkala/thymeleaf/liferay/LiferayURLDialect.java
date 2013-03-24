@@ -17,28 +17,29 @@ import org.thymeleaf.processor.IProcessor;
  */
 public class LiferayURLDialect extends AbstractDialect {
 
-	/* (non-Javadoc)
-	 * @see org.thymeleaf.dialect.IDialect#getPrefix()
-	 */
-	public String getPrefix() {
-		return "liferay";
-	}
+    /* (non-Javadoc)
+     * @see org.thymeleaf.dialect.IDialect#getPrefix()
+     */
+    public String getPrefix() {
+        return "liferay";
+    }
 
-	/* (non-Javadoc)
-	 * @see org.thymeleaf.dialect.IDialect#isLenient()
-	 */
-	public boolean isLenient() {
-		return false;
-	}
+    /* (non-Javadoc)
+     * @see org.thymeleaf.dialect.IDialect#isLenient()
+     */
+    public boolean isLenient() {
+        return false;
+    }
 
-	@Override
-	public Set<IProcessor> getProcessors() {
-		Set<IProcessor> processors = new HashSet<IProcessor>();
-		processors.add(new LiferayURLWithProcessor());
+    @Override
+    public Set<IProcessor> getProcessors() {
+        Set<IProcessor> processors = new HashSet<IProcessor>();
+        processors.add(new LiferayURLWithProcessor());
         processors.add(new LiferayAttributeModifierProcessor("src"));
         processors.add(new LiferayAttributeModifierProcessor("href"));
         processors.add(new LiferayAttributeModifierProcessor("value"));
         processors.add(new LiferayAttributeModifierProcessor("action"));
-		return processors;
-	}
+
+        return processors;
+    }
 }

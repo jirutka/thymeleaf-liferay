@@ -4,21 +4,17 @@ import com.liferay.portal.kernel.portlet.LiferayPortletURL;
 import org.thymeleaf.Arguments;
 import org.thymeleaf.context.IWebContext;
 import org.thymeleaf.dom.Element;
-import org.thymeleaf.exceptions.TemplateProcessingException;
-import org.thymeleaf.processor.attr.AbstractAttributeModifierAttrProcessor;
-import org.thymeleaf.standard.expression.Assignation;
-import org.thymeleaf.standard.expression.AssignationSequence;
-import org.thymeleaf.standard.expression.Expression;
-import org.thymeleaf.standard.expression.StandardExpressionProcessor;
 import org.thymeleaf.standard.processor.attr.AbstractStandardSingleAttributeModifierAttrProcessor;
 import org.thymeleaf.util.PrefixUtils;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.HashMap;
 import java.util.Map;
 
 /**
  * Attribute modifying processor for
+ *
+ * @author Tommi Hannikkala <tommi@hannikkala.com>
+ * @author Jakub Jirutka <jakub@jirutka.cz>
  */
 public class LiferayAttributeModifierProcessor extends AbstractStandardSingleAttributeModifierAttrProcessor {
 
@@ -51,29 +47,10 @@ public class LiferayAttributeModifierProcessor extends AbstractStandardSingleAtt
         IWebContext context = (IWebContext) arguments.getContext();
         HttpServletRequest request = context.getHttpServletRequest();
 
-        final String attributeValue = element.getAttributeValue(attributeName);
+        String attributeValue = element.getAttributeValue(attributeName);
+        Map<String,Object> newLocalVariables = LiferayURLUtil.parseParams(arguments, attributeValue);
 
-        final AssignationSequence assignations =
-                StandardExpressionProcessor.parseAssignationSequence(
-                        arguments, attributeValue, false /* no parameters without value */);
-        if (assignations == null) {
-            throw new TemplateProcessingException(
-                    "Could not parse value as attribute assignations: \"" + attributeValue + "\"");
-        }
-
-        final Map<String,Object> newLocalVariables = new HashMap<String,Object>(assignations.size() + 1, 1.0f);
-        for (final Assignation assignation : assignations) {
-
-            final String varName = assignation.getLeft().getValue();
-            final Expression expression = assignation.getRight();
-            final Object varValue = StandardExpressionProcessor.executeExpression(arguments, expression);
-
-            newLocalVariables.put(varName, varValue);
-
-        }
-
-        LiferayURLUtil urlUtil = new LiferayURLUtil("liferay");
-        LiferayPortletURL portletURL = urlUtil.createUrl(newLocalVariables, request);
+        LiferayPortletURL portletURL = LiferayURLUtil.createUrl(newLocalVariables, request);
 
         return portletURL.toString();
     }
